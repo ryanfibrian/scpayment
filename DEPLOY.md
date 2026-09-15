@@ -32,14 +32,21 @@ sebagai subdomain baru `scpayment.vicmic.id` yang nempel di hosting cPanel
 Pilih salah satu:
 
 **A. Via Git (kalau cPanel punya "Git Version Control")**
-- Push folder project ini ke repo Git (GitHub/GitLab), lalu di cPanel > Git
-  Version Control, clone repo tersebut ke folder aplikasi (misal `~/scpayment`).
+- Repo sudah di push ke https://github.com/ryanfibrian/scpayment — di cPanel >
+  Git Version Control, clone repo tersebut ke folder aplikasi (misal `~/scpayment`).
 
 **B. Via File Manager**
 - Zip seluruh folder project ini **kecuali** `node_modules/`, `.env`, `sessions/`.
 - Upload lewat cPanel > File Manager ke folder aplikasi (misal `~/scpayment`,
   di luar `public_html` supaya kode tidak bisa diakses publik langsung).
 - Extract zip di sana.
+
+> **Penting:** file `data/transactions-seed.json` (data transaksi asli — nama
+> barang, harga, no invoice) **sengaja tidak ada di repo GitHub** karena itu
+> data bisnis sensitif. Apapun cara upload di atas (Git atau File Manager),
+> upload file ini **secara terpisah** lewat cPanel File Manager langsung ke
+> folder `data/` di server, sebelum menjalankan `npm run migrate:data` di
+> Langkah 5.
 
 ## 4. Setup Node.js App
 
@@ -83,8 +90,8 @@ Setelah masuk ke virtual environment & folder aplikasi, jalankan:
 npm run migrate:schema
 
 # 2. Import 488 baris data transaksi dari data/transactions-seed.json
-#    (file ini sudah hasil konversi dari Excel "Laporan pembayaran 21052026.xlsx"
-#    dan sudah ikut ter-upload bersama kode)
+#    (pastikan file ini sudah diupload manual ke folder data/ - lihat catatan
+#    di Langkah 3, file ini TIDAK ada di repo GitHub)
 npm run migrate:data
 
 # 3. Buat akun admin — GANTI username & password di bawah ini!
