@@ -1,10 +1,12 @@
-// Alat bantu SEKALI PAKAI (dijalankan lokal, tidak perlu di-deploy ke server):
-// Mengubah file Excel "Laporan pembayaran" menjadi data/transactions-seed.json
-// supaya proses import ke server TIDAK perlu dependency "xlsx" (ada isu keamanan
-// yang belum ada fix-nya di versi npm publik).
+// Alat bantu SEKALI PAKAI, dijalankan di LAPTOP kamu saja (bukan di server -
+// server cPanel-nya pakai PHP, tidak butuh Node.js sama sekali).
+// Mengubah file Excel "Laporan pembayaran" menjadi data/transactions-seed.json,
+// yang nanti diupload manual ke server lewat File Manager.
 //
-// Cara pakai:
-//   node scripts/convert-excel-to-json.js "C:\path\ke\Laporan pembayaran 21052026.xlsx"
+// Cara pakai (butuh Node.js terpasang di laptop, sekali jalan cukup):
+//   npm install xlsx --no-save
+//   node tools/convert-excel-to-json.js "C:\path\ke\Laporan pembayaran 21052026.xlsx"
+//   npm uninstall xlsx
 
 const path = require('path');
 const fs = require('fs');

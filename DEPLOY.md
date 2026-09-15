@@ -1,12 +1,8 @@
 # Panduan Deploy ke cPanel (scpayment.vicmic.id)
 
-Aplikasi ini adalah Node.js + Express + MySQL. Panduan di bawah untuk deploy
-sebagai subdomain baru `scpayment.vicmic.id` yang nempel di hosting cPanel
-`vicmic.id` yang sudah ada, memakai fitur **Setup Node.js App**.
-
-> Kalau paket hosting vicmic.id ternyata **tidak** punya menu "Setup Node.js App"
-> di cPanel, kabari saya — berarti perlu pendekatan lain (PHP, atau upgrade paket
-> hosting yang support Node.js).
+Aplikasi ini murni **PHP + MySQL** — tidak pakai Node.js, tidak perlu "Setup
+Node.js App", tidak perlu npm install. Tinggal upload file `.php` ke folder
+subdomain, sama seperti deploy WordPress/PHP biasa.
 
 ---
 
@@ -15,10 +11,16 @@ sebagai subdomain baru `scpayment.vicmic.id` yang nempel di hosting cPanel
 1. Login ke cPanel `vicmic.id`.
 2. Buka **Domains** (atau **Subdomains** di cPanel versi lama).
 3. Buat subdomain: `scpayment` domain `vicmic.id` → jadi `scpayment.vicmic.id`.
-4. Document root bisa dibiarkan default (misal `scpayment.vicmic.id` atau
-   `public_html/scpayment`) — nanti akan diarahkan otomatis oleh Setup Node.js App.
+4. Catat **Document Root**-nya, biasanya otomatis jadi sesuatu seperti
+   `/home/vicmicid/scpayment.vicmic.id` — folder inilah tempat semua file PHP
+   nanti diupload (**bukan** folder `public_html`, dan bukan folder Node.js
+   `scpayment` yang lama kalau sempat dibuat — itu boleh dihapus, lihat catatan
+   di bagian bawah).
 
 ## 2. Buat Database MySQL
+
+(Lewati langkah ini kalau sudah pernah buat database untuk percobaan Node.js
+sebelumnya — tinggal dipakai ulang.)
 
 1. Buka cPanel > **MySQL® Databases**.
 2. Buat database baru, misal `vicmic_scpayment`.
@@ -27,116 +29,101 @@ sebagai subdomain baru `scpayment.vicmic.id` yang nempel di hosting cPanel
 5. Catat: nama database lengkap, username lengkap (biasanya ada prefix akun
    cPanel, misal `namacpanel_vicmic_scpayment`), dan passwordnya.
 
-## 3. Upload Kode Aplikasi (via File Manager)
+## 3. Upload Kode Aplikasi
 
-> Catatan: cPanel "Git Version Control" menolak clone URL yang mengandung
-> token/password tertanam (keamanan bawaan cPanel), dan repo GitHub-nya
-> private — jadi cara paling praktis di sini adalah upload manual lewat File
-> Manager, bukan lewat Git.
-
-1. Di komputer lokal, buat file zip dari folder project ini, **kecuali**:
-   `node_modules/`, `.env`, `sessions/`, `.git/`.
+1. Di komputer lokal, buat file zip dari folder project ini, **kecuali**
+   `.git/` dan `tools/node_modules/` (kalau ada).
    - Cara cepat lewat PowerShell (dari dalam folder project):
      ```powershell
-     Compress-Archive -Path .env.example,.gitignore,DEPLOY.md,README.md,config,data,middleware,package.json,package-lock.json,public,routes,scripts,server.js,sql -DestinationPath scpayment-deploy.zip
+     Compress-Archive -Path api,css,js,scripts,sql,config.sample.php,index.php,login.php,logout.php -DestinationPath scpayment-deploy.zip
      ```
-   - Atau pilih semua file/folder di File Explorer (kecuali `node_modules`,
-     `.env`, `.git`) → klik kanan → **Send to > Compressed (zipped) folder**.
 2. Login cPanel `vicmic.id` > **File Manager**.
-3. Masuk/buat folder aplikasi di luar `public_html`, misal `/home/vicmicid/scpayment`
-   (supaya kode tidak bisa diakses publik langsung).
-4. Klik **Upload**, upload file zip tadi ke folder tersebut.
-5. Setelah selesai upload, klik kanan file zip nya > **Extract**, lalu hapus
-   file zip-nya kalau sudah tidak perlu.
-6. Di dalam folder `scpayment/data/`, upload juga `transactions-seed.json`
-   dari laptop kamu (file ini memang sengaja tidak ada di repo GitHub karena
-   berisi data bisnis asli — nama barang, harga, no invoice).
+3. Masuk ke folder document root subdomain dari Langkah 1
+   (misal `/home/vicmicid/scpayment.vicmic.id`).
+4. Klik **Upload**, upload file zip tadi.
+5. Setelah selesai, klik kanan file zip > **Extract** langsung di folder itu
+   (bukan di dalam subfolder baru), lalu hapus file zip-nya.
+6. Upload juga `data/transactions-seed.json` dari laptop kamu ke folder
+   `data/` di server (bikin folder `data` dulu kalau belum ada saat extract).
+   File ini sengaja **tidak** ada di repo GitHub karena berisi data bisnis
+   asli (nama barang, harga, no invoice).
 
-Kalau nanti ada update kode, ulangi saja langkah 1–5 untuk file yang berubah
-(atau re-upload semua & extract, timpa yang lama — data di database tidak
-akan hilang karena terpisah dari file kode).
+## 4. Setup config.php
 
-## 4. Setup Node.js App
-
-1. Buka cPanel > **Setup Node.js App** > **Create Application**.
-2. Isi:
-   - **Node.js version**: pilih versi LTS terbaru yang tersedia (minimal 16, disarankan 18/20).
-   - **Application mode**: `Production`.
-   - **Application root**: folder tempat kode di-upload (misal `scpayment`).
-   - **Application URL**: pilih subdomain `scpayment.vicmic.id`.
-   - **Application startup file**: `server.js`.
-3. Klik **Create**.
-4. Setelah dibuat, buka halaman detail aplikasi tersebut. Di bagian
-   **Environment Variables**, tambahkan satu per satu:
+1. Di File Manager, cari file **config.sample.php**, klik kanan > **Copy**,
+   simpan salinannya dengan nama **config.php** (di folder yang sama, folder
+   paling atas / document root).
+2. Klik kanan `config.php` > **Edit**, isi:
+   ```php
+   define('DB_HOST', 'localhost');
+   define('DB_NAME', 'namacpanel_vicmic_scpayment');
+   define('DB_USER', 'namacpanel_vicmic_scpayment_user');
+   define('DB_PASS', 'password_yang_dibuat_di_langkah_2');
+   define('SETUP_TOKEN', 'ganti_dengan_string_acak_bebas_yang_cuma_kamu_tahu');
    ```
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_NAME=namacpanel_vicmic_scpayment
-   DB_USER=namacpanel_vicmic_scpayment_user
-   DB_PASSWORD=password_yang_dibuat_di_langkah_2
-   SESSION_SECRET=string_acak_panjang_bebas_min_32_karakter
-   NODE_ENV=production
-   ```
-   (Tidak perlu isi `PORT` manual — cPanel/Passenger yang mengatur otomatis.)
-5. Klik **Save**, lalu klik **Run NPM Install** (tombol ini menjalankan
-   `npm install` sesuai `package.json`, hanya 6 dependency, ringan & cepat).
+3. Simpan.
 
 ## 5. Buat Tabel & Import Data
 
-Buka **Terminal** di cPanel (atau SSH kalau tersedia). Di halaman Setup Node.js
-App tadi ada tombol/perintah untuk masuk ke *virtual environment* aplikasi
-(contoh perintahnya biasanya ditampilkan di halaman itu, kira-kira seperti):
+**Kalau ada akses Terminal di cPanel** (menu **Terminal**):
 
 ```bash
-source /home/namacpanel/nodevenv/scpayment/18/bin/activate && cd /home/namacpanel/scpayment
+cd /home/vicmicid/scpayment.vicmic.id
+
+# (skip kalau belum ada mysql client / mau lewat phpMyAdmin saja di bawah)
+mysql -u namacpanel_vicmic_scpayment_user -p namacpanel_vicmic_scpayment < sql/schema.sql
+
+php scripts/migrate_data.php
+
+# GANTI username & password di bawah ini!
+php scripts/create_admin.php admin PasswordKuatAnda123!
 ```
 
-Setelah masuk ke virtual environment & folder aplikasi, jalankan:
+**Kalau tidak ada Terminal**, semua bisa dilakukan lewat browser:
 
-```bash
-# 1. Buat tabel users & transactions
-npm run migrate:schema
+1. **Buat tabel** — buka cPanel > **phpMyAdmin**, pilih database yang dibuat
+   di Langkah 2, klik tab **Import**, upload file `sql/schema.sql`, klik **Go**.
+2. **Import data** — buka di browser:
+   ```
+   https://scpayment.vicmic.id/scripts/migrate_data.php?token=ISI_SETUP_TOKEN_DI_CONFIG
+   ```
+3. **Buat akun admin** — buka di browser (ganti username/password):
+   ```
+   https://scpayment.vicmic.id/scripts/create_admin.php?token=ISI_SETUP_TOKEN&username=admin&password=PasswordKuatAnda123!
+   ```
 
-# 2. Import 488 baris data transaksi dari data/transactions-seed.json
-#    (pastikan file ini sudah diupload manual ke folder data/ - lihat catatan
-#    di Langkah 3, file ini TIDAK ada di repo GitHub)
-npm run migrate:data
+## 6. Selesai — Bersih-bersih
 
-# 3. Buat akun admin — GANTI username & password di bawah ini!
-node scripts/create-admin.js admin PasswordKuatAnda123!
-```
-
-Kalau cPanel-nya **tidak punya Terminal/SSH sama sekali**, langkah ini tidak
-bisa dijalankan lewat UI biasa — perlu minta akses Terminal diaktifkan ke
-support hosting, karena proses import data & hash password butuh eksekusi
-Node.js langsung (bukan sekadar import SQL).
-
-## 6. Restart & Cek
-
-1. Kembali ke halaman **Setup Node.js App**, klik **Restart**.
-2. Buka `https://scpayment.vicmic.id` di browser.
-3. Login dengan username & password admin yang dibuat di langkah 5.
-4. cPanel biasanya otomatis menyediakan SSL gratis (AutoSSL) untuk subdomain
-   baru dalam beberapa menit–jam. Kalau belum aktif, cek cPanel > SSL/TLS Status.
+1. Buka `https://scpayment.vicmic.id`, login dengan akun admin dari Langkah 5.
+2. **Hapus folder `scripts/`** dari server (lewat File Manager) setelah kedua
+   script di atas selesai dijalankan — supaya tidak ada yang bisa
+   membuat/reset akun admin lewat URL itu lagi.
+3. Kalau sebelumnya sempat membuat **Node.js App** & folder `scpayment`
+   (bukan `scpayment.vicmic.id`) untuk percobaan yang gagal — boleh dihapus:
+   - cPanel > **Setup Node.js App** > hapus aplikasi "scpayment" (kalau ada).
+   - File Manager > hapus folder `/home/vicmicid/scpayment` (folder lama,
+     bukan folder subdomain `scpayment.vicmic.id` yang baru dipakai ini).
+4. SSL: cPanel biasanya otomatis menyediakan SSL gratis (AutoSSL) untuk
+   subdomain baru dalam beberapa menit–jam. Cek cPanel > SSL/TLS Status kalau
+   belum aktif.
 
 ---
 
 ## Kalau nanti mau update data lagi dari Excel
 
-1. Jalankan lagi (di komputer lokal, bukan di server) untuk generate ulang
-   `data/transactions-seed.json` dari file Excel terbaru:
+1. Di laptop (bukan di server):
    ```bash
    npm install xlsx --no-save
-   node scripts/convert-excel-to-json.js "C:\path\ke\file-excel-baru.xlsx"
+   node tools/convert-excel-to-json.js "C:\path\ke\file-excel-baru.xlsx"
    npm uninstall xlsx
    ```
-2. Upload ulang file `data/transactions-seed.json` ke server (timpa yang lama).
-3. Di server: `node scripts/migrate-data.js --force` (menambahkan sebagai baris
-   baru, tidak menghapus data lama — hapus manual dulu lewat phpMyAdmin kalau
-   mau reset total).
+2. Upload ulang `data/transactions-seed.json` ke server (timpa yang lama).
+3. Kalau folder `scripts/` sudah dihapus (Langkah 6.2), upload dulu ulang
+   file `scripts/migrate_data.php`, lalu jalankan
+   `php scripts/migrate_data.php --force` (Terminal) atau lewat browser
+   dengan `&force=1`. Hapus lagi folder `scripts/` setelah selesai.
 
 ## Reset password admin
 
-```bash
-node scripts/create-admin.js admin PasswordBaru123!
-```
+Sama seperti Langkah 5 di atas — upload ulang `scripts/create_admin.php` kalau
+sudah dihapus, jalankan lagi dengan username/password baru, lalu hapus lagi.

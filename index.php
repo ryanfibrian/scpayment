@@ -1,17 +1,21 @@
+<?php
+require_once __DIR__ . '/config.php';
+require_login();
+?>
 <!doctype html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SC Payment - Dashboard</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div class="topbar">
     <h1>SC Payment</h1>
     <div class="user-info">
-      <span id="usernameLabel"></span>
-      <button class="btn btn-secondary" id="logoutBtn">Keluar</button>
+      <span><?= htmlspecialchars($_SESSION['username']) ?></span>
+      <a href="logout.php" class="btn btn-secondary">Keluar</a>
     </div>
   </div>
 
@@ -110,6 +114,6 @@
     </div>
   </div>
 
-  <script src="/js/app.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 -- Skema database untuk scpayment.vicmic.id
--- Bisa dijalankan otomatis lewat `npm run migrate:schema`
--- atau di-import manual lewat cPanel > phpMyAdmin.
+-- Import lewat cPanel > phpMyAdmin (tab Import), pilih database yang sudah
+-- dibuat, lalu upload file ini.
 
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,

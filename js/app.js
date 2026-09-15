@@ -6,12 +6,13 @@ const state = {
   totalPages: 1,
 };
 
+const API = 'api/transactions.php';
+
 const tableBody = document.getElementById('tableBody');
 const emptyState = document.getElementById('emptyState');
 const pagination = document.getElementById('pagination');
 const searchInput = document.getElementById('searchInput');
 const statusFilter = document.getElementById('statusFilter');
-const usernameLabel = document.getElementById('usernameLabel');
 
 const modalOverlay = document.getElementById('modalOverlay');
 const modalTitle = document.getElementById('modalTitle');
@@ -33,18 +34,9 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-async function checkAuth() {
-  const res = await fetch('/api/auth/me');
-  const data = await res.json();
-  if (!data.loggedIn) {
-    window.location.href = '/login.html';
-    return;
-  }
-  usernameLabel.textContent = data.username;
-}
-
 async function loadSummary() {
-  const res = await fetch('/api/transactions/summary');
+  const res = await fetch(`${API}?action=summary`);
+  if (res.status === 401) return (window.location.href = 'login.php');
   if (!res.ok) return;
   const s = await res.json();
   document.getElementById('sumTotal').textContent = s.total_transaksi ?? 0;
@@ -55,16 +47,14 @@ async function loadSummary() {
 
 async function loadTransactions() {
   const params = new URLSearchParams({
+    action: 'list',
     q: state.q,
     status: state.status,
     page: state.page,
     limit: state.limit,
   });
-  const res = await fetch(`/api/transactions?${params.toString()}`);
-  if (res.status === 401) {
-    window.location.href = '/login.html';
-    return;
-  }
+  const res = await fetch(`${API}?${params.toString()}`);
+  if (res.status === 401) return (window.location.href = 'login.php');
   const data = await res.json();
   state.totalPages = data.totalPages;
   renderTable(data.data);
@@ -89,8 +79,8 @@ function renderTable(rows) {
       <td>${formatRupiah(row.harga_jual)}</td>
       <td>${escapeHtml(row.catatan)}</td>
       <td>
-        <span class="badge ${row.sudah_bayar ? 'paid' : 'unpaid'}" data-id="${row.id}" data-action="toggle">
-          ${row.sudah_bayar ? '✓ Sudah Bayar' : '✗ Belum Bayar'}
+        <span class="badge ${row.sudah_bayar == 1 ? 'paid' : 'unpaid'}" data-id="${row.id}" data-action="toggle">
+          ${row.sudah_bayar == 1 ? '✓ Sudah Bayar' : '✗ Belum Bayar'}
         </span>
       </td>
       <td>
@@ -145,11 +135,6 @@ statusFilter.addEventListener('change', () => {
   loadTransactions();
 });
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await fetch('/api/auth/logout', { method: 'POST' });
-  window.location.href = '/login.html';
-});
-
 // ---------- Table row actions (delegated) ----------
 tableBody.addEventListener('click', async (e) => {
   const target = e.target.closest('[data-action]');
@@ -160,10 +145,10 @@ tableBody.addEventListener('click', async (e) => {
   const row = JSON.parse(tr.dataset.row);
 
   if (action === 'toggle') {
-    const newStatus = !row.sudah_bayar;
+    const newStatus = !(row.sudah_bayar == 1);
     target.style.opacity = '0.5';
-    const res = await fetch(`/api/transactions/${id}/status`, {
-      method: 'PATCH',
+    const res = await fetch(`${API}?action=toggle&id=${id}`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sudah_bayar: newStatus }),
     });
@@ -182,7 +167,7 @@ tableBody.addEventListener('click', async (e) => {
 
   if (action === 'delete') {
     if (!confirm(`Hapus data "${row.nama_barang}"?`)) return;
-    const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API}?action=delete&id=${id}`, { method: 'POST' });
     if (res.ok) {
       await loadTransactions();
       await loadSummary();
@@ -202,9 +187,8 @@ function openModal(row) {
   document.getElementById('txFakturJual').value = row ? row.faktur_jual || '' : '';
   document.getElementById('txHargaJual').value = row ? row.harga_jual || '' : '';
   document.getElementById('txCatatan').value = row ? row.catatan || '' : '';
-  document.getElementById('txSudahBayar').checked = row ? !!row.sudah_bayar : false;
+  document.getElementById('txSudahBayar').checked = row ? row.sudah_bayar == 1 : false;
 
-  // status checkbox hanya relevan saat tambah baru; saat edit, status diubah lewat badge di tabel
   txSudahBayarRow.style.display = row ? 'none' : 'flex';
 
   modalTitle.textContent = row ? 'Edit Transaksi' : 'Tambah Transaksi';
@@ -236,11 +220,11 @@ txForm.addEventListener('submit', async (e) => {
     payload.sudah_bayar = document.getElementById('txSudahBayar').checked;
   }
 
-  const url = id ? `/api/transactions/${id}` : '/api/transactions';
-  const method = id ? 'PUT' : 'POST';
+  const action = id ? 'update' : 'create';
+  const idParam = id ? `&id=${id}` : '';
 
-  const res = await fetch(url, {
-    method,
+  const res = await fetch(`${API}?action=${action}${idParam}`, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
@@ -257,7 +241,6 @@ txForm.addEventListener('submit', async (e) => {
 
 // ---------- Init ----------
 (async function init() {
-  await checkAuth();
   await loadSummary();
   await loadTransactions();
 })();

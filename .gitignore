@@ -1,9 +1,10 @@
-node_modules/
-.env
-sessions/
+config.php
 *.log
 .DS_Store
 
 # Data transaksi asli (nama barang, harga, no invoice) - jangan ikut ke repo git.
-# Upload manual lewat cPanel File Manager saat deploy, jangan lewat git push.
+# Upload manual lewat cPanel File Manager saat deploy.
 data/transactions-seed.json
+
+# Tool lokal (pakai Node.js di laptop, bukan untuk di-deploy ke server)
+tools/node_modules/
