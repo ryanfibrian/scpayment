@@ -41,6 +41,9 @@ try {
         $limit = min(max((int) ($_GET['limit'] ?? 100), 1), 500);
         $offset = ($page - 1) * $limit;
 
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo = $_GET['date_to'] ?? '';
+
         $where = [];
         $params = [];
         if ($q !== '') {
@@ -50,9 +53,17 @@ try {
         }
         if ($status === 'paid') $where[] = 'sudah_bayar = 1';
         if ($status === 'unpaid') $where[] = 'sudah_bayar = 0';
+        if ($dateFrom !== '') {
+            $where[] = 'DATE(created_at) >= ?';
+            $params[] = $dateFrom;
+        }
+        if ($dateTo !== '') {
+            $where[] = 'DATE(created_at) <= ?';
+            $params[] = $dateTo;
+        }
         $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-        $stmt = $pdo->prepare("SELECT * FROM transactions $whereSql ORDER BY id DESC LIMIT $limit OFFSET $offset");
+        $stmt = $pdo->prepare("SELECT * FROM transactions $whereSql ORDER BY created_at DESC, id DESC LIMIT $limit OFFSET $offset");
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
 

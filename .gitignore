@@ -1,5 +1,6 @@
 config.php
 *.log
+*.zip
 .DS_Store
 
 # Data transaksi asli (nama barang, harga, no invoice) - jangan ikut ke repo git.

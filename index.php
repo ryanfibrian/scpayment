@@ -46,6 +46,9 @@ require_login();
         <option value="paid">Sudah Bayar</option>
         <option value="unpaid">Belum Bayar</option>
       </select>
+      <label class="date-filter-label">Dari <input type="date" id="dateFrom" /></label>
+      <label class="date-filter-label">Sampai <input type="date" id="dateTo" /></label>
+      <button class="btn btn-secondary" id="clearDateBtn">Reset Tanggal</button>
       <button class="btn btn-primary" id="addBtn">+ Tambah Transaksi</button>
     </div>
 
@@ -53,10 +56,11 @@ require_login();
       <table>
         <thead>
           <tr>
+            <th>Tanggal</th>
             <th>No Invoice</th>
             <th>Nama Barang</th>
-            <th>Harga Beli</th>
-            <th>Faktur Jual</th>
+            <th>Harga Beli (Include PPN)</th>
+            <th>Nomor Accurate</th>
             <th>Harga Jual</th>
             <th>Catatan</th>
             <th>Status</th>
@@ -87,11 +91,11 @@ require_login();
           <input type="text" id="txNamaBarang" required />
         </div>
         <div class="field">
-          <label for="txHargaBeli">Harga Beli (excl PPN)</label>
+          <label for="txHargaBeli">Harga Beli (Include PPN)</label>
           <input type="number" id="txHargaBeli" step="0.01" />
         </div>
         <div class="field">
-          <label for="txFakturJual">Faktur Jual Accurate</label>
+          <label for="txFakturJual">Nomor Accurate</label>
           <input type="text" id="txFakturJual" />
         </div>
         <div class="field">

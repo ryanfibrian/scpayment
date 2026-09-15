@@ -3,6 +3,8 @@ const state = {
   limit: 100,
   q: '',
   status: 'all',
+  dateFrom: '',
+  dateTo: '',
   totalPages: 1,
 };
 
@@ -13,6 +15,8 @@ const emptyState = document.getElementById('emptyState');
 const pagination = document.getElementById('pagination');
 const searchInput = document.getElementById('searchInput');
 const statusFilter = document.getElementById('statusFilter');
+const dateFromInput = document.getElementById('dateFrom');
+const dateToInput = document.getElementById('dateTo');
 
 const modalOverlay = document.getElementById('modalOverlay');
 const modalTitle = document.getElementById('modalTitle');
@@ -23,6 +27,13 @@ function formatRupiah(n) {
   const num = Number(n);
   if (!n || Number.isNaN(num)) return '-';
   return 'Rp ' + num.toLocaleString('id-ID');
+}
+
+function formatTanggal(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(String(dateStr).replace(' ', 'T'));
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function escapeHtml(str) {
@@ -50,6 +61,8 @@ async function loadTransactions() {
     action: 'list',
     q: state.q,
     status: state.status,
+    date_from: state.dateFrom,
+    date_to: state.dateTo,
     page: state.page,
     limit: state.limit,
   });
@@ -72,6 +85,7 @@ function renderTable(rows) {
   for (const row of rows) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td>${formatTanggal(row.created_at)}</td>
       <td>${escapeHtml(row.no_invoice)}</td>
       <td>${escapeHtml(row.nama_barang)}</td>
       <td>${formatRupiah(row.harga_beli)}</td>
@@ -131,6 +145,27 @@ searchInput.addEventListener('input', () => {
 
 statusFilter.addEventListener('change', () => {
   state.status = statusFilter.value;
+  state.page = 1;
+  loadTransactions();
+});
+
+dateFromInput.addEventListener('change', () => {
+  state.dateFrom = dateFromInput.value;
+  state.page = 1;
+  loadTransactions();
+});
+
+dateToInput.addEventListener('change', () => {
+  state.dateTo = dateToInput.value;
+  state.page = 1;
+  loadTransactions();
+});
+
+document.getElementById('clearDateBtn').addEventListener('click', () => {
+  dateFromInput.value = '';
+  dateToInput.value = '';
+  state.dateFrom = '';
+  state.dateTo = '';
   state.page = 1;
   loadTransactions();
 });

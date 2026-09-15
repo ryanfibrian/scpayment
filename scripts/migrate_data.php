@@ -51,8 +51,14 @@ try {
         die("Tabel transactions sudah berisi $existing baris. Tambahkan $flag kalau memang mau tetap import (bisa duplikat).\n");
     }
 
+    // Tanggal laporan Excel aslinya (dari nama file "Laporan pembayaran 21052026")
+    // dipakai sebagai tanggal transaksi untuk semua baris hasil import, supaya
+    // data lama ini jadi satu kelompok "histori" yang jelas beda dari entri
+    // baru yang ditambahkan lewat aplikasi (created_at = waktu saat ini).
+    $importDate = '2026-05-21 00:00:00';
+
     $stmt = $pdo->prepare(
-        'INSERT INTO transactions (no_invoice, nama_barang, harga_beli, faktur_jual, harga_jual) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO transactions (no_invoice, nama_barang, harga_beli, faktur_jual, harga_jual, created_at) VALUES (?, ?, ?, ?, ?, ?)'
     );
 
     $inserted = 0;
@@ -63,6 +69,7 @@ try {
             $r['harga_beli'] ?? null,
             $r['faktur_jual'] ?? null,
             $r['harga_jual'] ?? null,
+            $importDate,
         ]);
         $inserted++;
     }

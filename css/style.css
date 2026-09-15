@@ -195,6 +195,22 @@ body {
   background: #fff;
 }
 
+.date-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.date-filter-label input[type="date"] {
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
 .table-wrap {
   background: var(--card-bg);
   border: 1px solid var(--border);
