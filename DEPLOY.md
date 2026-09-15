@@ -27,26 +27,34 @@ sebagai subdomain baru `scpayment.vicmic.id` yang nempel di hosting cPanel
 5. Catat: nama database lengkap, username lengkap (biasanya ada prefix akun
    cPanel, misal `namacpanel_vicmic_scpayment`), dan passwordnya.
 
-## 3. Upload Kode Aplikasi
+## 3. Upload Kode Aplikasi (via File Manager)
 
-Pilih salah satu:
+> Catatan: cPanel "Git Version Control" menolak clone URL yang mengandung
+> token/password tertanam (keamanan bawaan cPanel), dan repo GitHub-nya
+> private — jadi cara paling praktis di sini adalah upload manual lewat File
+> Manager, bukan lewat Git.
 
-**A. Via Git (kalau cPanel punya "Git Version Control")**
-- Repo sudah di push ke https://github.com/ryanfibrian/scpayment — di cPanel >
-  Git Version Control, clone repo tersebut ke folder aplikasi (misal `~/scpayment`).
+1. Di komputer lokal, buat file zip dari folder project ini, **kecuali**:
+   `node_modules/`, `.env`, `sessions/`, `.git/`.
+   - Cara cepat lewat PowerShell (dari dalam folder project):
+     ```powershell
+     Compress-Archive -Path .env.example,.gitignore,DEPLOY.md,README.md,config,data,middleware,package.json,package-lock.json,public,routes,scripts,server.js,sql -DestinationPath scpayment-deploy.zip
+     ```
+   - Atau pilih semua file/folder di File Explorer (kecuali `node_modules`,
+     `.env`, `.git`) → klik kanan → **Send to > Compressed (zipped) folder**.
+2. Login cPanel `vicmic.id` > **File Manager**.
+3. Masuk/buat folder aplikasi di luar `public_html`, misal `/home/vicmicid/scpayment`
+   (supaya kode tidak bisa diakses publik langsung).
+4. Klik **Upload**, upload file zip tadi ke folder tersebut.
+5. Setelah selesai upload, klik kanan file zip nya > **Extract**, lalu hapus
+   file zip-nya kalau sudah tidak perlu.
+6. Di dalam folder `scpayment/data/`, upload juga `transactions-seed.json`
+   dari laptop kamu (file ini memang sengaja tidak ada di repo GitHub karena
+   berisi data bisnis asli — nama barang, harga, no invoice).
 
-**B. Via File Manager**
-- Zip seluruh folder project ini **kecuali** `node_modules/`, `.env`, `sessions/`.
-- Upload lewat cPanel > File Manager ke folder aplikasi (misal `~/scpayment`,
-  di luar `public_html` supaya kode tidak bisa diakses publik langsung).
-- Extract zip di sana.
-
-> **Penting:** file `data/transactions-seed.json` (data transaksi asli — nama
-> barang, harga, no invoice) **sengaja tidak ada di repo GitHub** karena itu
-> data bisnis sensitif. Apapun cara upload di atas (Git atau File Manager),
-> upload file ini **secara terpisah** lewat cPanel File Manager langsung ke
-> folder `data/` di server, sebelum menjalankan `npm run migrate:data` di
-> Langkah 5.
+Kalau nanti ada update kode, ulangi saja langkah 1–5 untuk file yang berubah
+(atau re-upload semua & extract, timpa yang lama — data di database tidak
+akan hilang karena terpisah dari file kode).
 
 ## 4. Setup Node.js App
 
