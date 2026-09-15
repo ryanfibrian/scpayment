@@ -3,3 +3,7 @@ node_modules/
 sessions/
 *.log
 .DS_Store
+
+# Data transaksi asli (nama barang, harga, no invoice) - jangan ikut ke repo git.
+# Upload manual lewat cPanel File Manager saat deploy, jangan lewat git push.
+data/transactions-seed.json
