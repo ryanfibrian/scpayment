@@ -62,6 +62,7 @@ require_login();
             <th>Harga Beli (Include PPN)</th>
             <th>Nomor Accurate</th>
             <th>Harga Jual</th>
+            <th>Margin</th>
             <th>Catatan</th>
             <th>Status</th>
             <th>Aksi</th>

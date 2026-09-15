@@ -36,6 +36,19 @@ function formatTanggal(dateStr) {
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function computeMargin(row) {
+  const beli = row.harga_beli === null || row.harga_beli === undefined || row.harga_beli === '' ? null : Number(row.harga_beli);
+  const jual = row.harga_jual === null || row.harga_jual === undefined || row.harga_jual === '' ? null : Number(row.harga_jual);
+  if (beli === null || jual === null || Number.isNaN(beli) || Number.isNaN(jual)) return null;
+  return jual - beli;
+}
+
+function formatMargin(margin) {
+  if (margin === null) return '-';
+  const sign = margin < 0 ? '-' : '';
+  return sign + 'Rp ' + Math.abs(margin).toLocaleString('id-ID');
+}
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -84,6 +97,8 @@ function renderTable(rows) {
 
   for (const row of rows) {
     const tr = document.createElement('tr');
+    const margin = computeMargin(row);
+    const marginClass = margin === null ? '' : margin < 0 ? 'margin-negative' : 'margin-positive';
     tr.innerHTML = `
       <td>${formatTanggal(row.created_at)}</td>
       <td>${escapeHtml(row.no_invoice)}</td>
@@ -91,6 +106,7 @@ function renderTable(rows) {
       <td>${formatRupiah(row.harga_beli)}</td>
       <td>${escapeHtml(row.faktur_jual)}</td>
       <td>${formatRupiah(row.harga_jual)}</td>
+      <td class="${marginClass}">${formatMargin(margin)}</td>
       <td>${escapeHtml(row.catatan)}</td>
       <td>
         <span class="badge ${row.sudah_bayar == 1 ? 'paid' : 'unpaid'}" data-id="${row.id}" data-action="toggle">

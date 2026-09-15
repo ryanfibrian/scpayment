@@ -259,6 +259,9 @@ tbody tr:hover { background: #fafbfc; }
 .badge.paid { background: var(--green-bg); color: var(--green); }
 .badge.unpaid { background: var(--red-bg); color: var(--red); }
 
+.margin-positive { color: var(--green); font-weight: 600; }
+.margin-negative { color: var(--red); font-weight: 600; }
+
 .row-actions {
   display: flex;
   gap: 8px;
