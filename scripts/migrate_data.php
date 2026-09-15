@@ -9,9 +9,17 @@
 //   https://scpayment.vicmic.id/scripts/migrate_data.php?token=ISI_SETUP_TOKEN
 //   tambahkan &force=1 di belakang kalau tabel sudah ada isinya
 
-require_once __DIR__ . '/../config.php';
-
 $isCli = (php_sapi_name() === 'cli');
+if (!$isCli) {
+    header('Content-Type: text/plain');
+}
+
+$configPath = __DIR__ . '/../config.php';
+if (!file_exists($configPath)) {
+    http_response_code(500);
+    die("config.php tidak ditemukan di document root. Copy config.sample.php jadi config.php dulu, isi kredensial database-nya (lihat DEPLOY.md Langkah 4).\n");
+}
+require_once $configPath;
 
 if ($isCli) {
     $force = in_array('--force', $argv ?? [], true);
@@ -20,7 +28,6 @@ if ($isCli) {
         http_response_code(403);
         die('Forbidden. Tambahkan ?token=... sesuai SETUP_TOKEN di config.php');
     }
-    header('Content-Type: text/plain');
     $force = ($_GET['force'] ?? '') === '1';
 }
 
@@ -35,27 +42,34 @@ if (!is_array($records)) {
 }
 echo 'Ditemukan ' . count($records) . " baris data.\n";
 
-$pdo = db();
-$existing = (int) $pdo->query('SELECT COUNT(*) AS total FROM transactions')->fetch()['total'];
-if ($existing > 0 && !$force) {
-    $flag = $isCli ? '--force' : '&force=1';
-    die("Tabel transactions sudah berisi $existing baris. Tambahkan $flag kalau memang mau tetap import (bisa duplikat).\n");
+try {
+    $pdo = db();
+
+    $existing = (int) $pdo->query('SELECT COUNT(*) AS total FROM transactions')->fetch()['total'];
+    if ($existing > 0 && !$force) {
+        $flag = $isCli ? '--force' : '&force=1';
+        die("Tabel transactions sudah berisi $existing baris. Tambahkan $flag kalau memang mau tetap import (bisa duplikat).\n");
+    }
+
+    $stmt = $pdo->prepare(
+        'INSERT INTO transactions (no_invoice, nama_barang, harga_beli, faktur_jual, harga_jual) VALUES (?, ?, ?, ?, ?)'
+    );
+
+    $inserted = 0;
+    foreach ($records as $r) {
+        $stmt->execute([
+            $r['no_invoice'] ?? null,
+            $r['nama_barang'] ?? null,
+            $r['harga_beli'] ?? null,
+            $r['faktur_jual'] ?? null,
+            $r['harga_jual'] ?? null,
+        ]);
+        $inserted++;
+    }
+
+    echo "Selesai. $inserted baris ter-import.\n";
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo "Gagal konek/insert ke database: " . $e->getMessage() . "\n";
+    echo "Cek lagi DB_HOST/DB_NAME/DB_USER/DB_PASS di config.php, dan pastikan tabel sudah dibuat dari sql/schema.sql.\n";
 }
-
-$stmt = $pdo->prepare(
-    'INSERT INTO transactions (no_invoice, nama_barang, harga_beli, faktur_jual, harga_jual) VALUES (?, ?, ?, ?, ?)'
-);
-
-$inserted = 0;
-foreach ($records as $r) {
-    $stmt->execute([
-        $r['no_invoice'] ?? null,
-        $r['nama_barang'] ?? null,
-        $r['harga_beli'] ?? null,
-        $r['faktur_jual'] ?? null,
-        $r['harga_jual'] ?? null,
-    ]);
-    $inserted++;
-}
-
-echo "Selesai. $inserted baris ter-import.\n";
